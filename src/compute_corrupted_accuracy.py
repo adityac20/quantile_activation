@@ -10,7 +10,7 @@ import torchvision.transforms.v2 as transforms
 from tqdm import tqdm
 
 from src.models.resnet import ResNet18
-from src.datasets.cifar100c import DistortedCIFAR100, list_distorions, list_severity
+from src.datasets.cifar10c import DistortedCIFAR10, list_distorions, list_severity
 
 
 @torch.no_grad()
@@ -39,14 +39,14 @@ def compute_accuracy(model, dataset, device):
 
 
 def main():
-    model_path = "/home/compute4500/Documents/Aditya/Project39_quantileAct/final_repo/quantile_activation/data/run03/best_model_resnet18_quant_cifar100.pth"
-    model = ResNet18(activation_type="quant", num_classes=100)
+    model_path = "./data/run01/best_model_resnet18_quant_cifar10.pth"
+    model = ResNet18(activation_type="quant", num_classes=10)
     model.load_state_dict(torch.load(model_path))
     model.eval()
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    file_results_path = "./results/resnet18_quant_cifar100c_corrupted.csv"
+    file_results_path = "./results/resnet18_quant_cifar10_corrupted.csv"
     with open(file_results_path, "w") as f:
         f.write("distortion,severity,accuracy\n")
 
@@ -62,7 +62,7 @@ def main():
 
     for distortion in list_distorions:
         for severity in list_severity:
-            dataset = DistortedCIFAR100(root, distortion, severity, transform)
+            dataset = DistortedCIFAR10(root, distortion, severity, transform)
             accuracy = compute_accuracy(model, dataset, device)
             with open(file_results_path, "a") as f:
                 f.write(f"{distortion},{severity},{accuracy}\n")

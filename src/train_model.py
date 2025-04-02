@@ -17,21 +17,16 @@ from tqdm import tqdm
 from src.models.resnet import ResNet18
 
 from src.datasets.cifar10 import get_cifar10
-from src.datasets.cifar100 import get_cifar100
 
 
 def get_dataset(dataset_name: str):
     if dataset_name == "cifar10":
         return get_cifar10(root="~/Documents/Datasets_Global/")
-    elif dataset_name == "cifar100":
-        return get_cifar100(root="~/Documents/Datasets_Global/")
 
 
 def get_model(model_name: str, activation_type: str, dataset_name: str):
     if model_name == "resnet18" and dataset_name == "cifar10":
         return ResNet18(activation_type=activation_type, num_classes=10)
-    elif model_name == "resnet18" and dataset_name == "cifar100":
-        return ResNet18(activation_type=activation_type, num_classes=100)
 
 
 def train_one_epoch(
@@ -91,7 +86,7 @@ def train(
     params: dict,
 ):
     best_acc = 0
-    run_id = 5
+    run_id = 1
     path_prefix = f"./data/run{run_id:02d}/"
     os.makedirs(path_prefix, exist_ok=True)
     path_postfix = f"{params['model_name']}_{params['activation_type']}_{params['dataset']}"
@@ -125,12 +120,12 @@ def main():
         "batch_size": 128,
         "learning_rate": 0.1,
         "weight_decay": 0.0001,
-        "dataset": "cifar100",
+        "dataset": "cifar10",
         "model_name": "resnet18",
         "activation_type": "quant",
         "flag_intermediate_quant": True,
     }
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset = get_dataset(params["dataset"])
     trainset, testset, transform_train, transform_test = dataset
 
