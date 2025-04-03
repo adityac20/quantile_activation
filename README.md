@@ -27,10 +27,10 @@ To use quantile activation in your own models:
 from src.quantile_activation_accum import quantile_activation_1d, quantile_activation_2d
 
 # For 1D activations (e.g., fully connected layers)
-self.act1d = quantile_activation_1d(num_features=512)
+self.act1d = quantile_activation_1d(n_features=512)
 
 # For 2D activations (e.g., convolutional layers)
-self.act2d = quantile_activation_2d(num_channels=64)
+self.act2d = quantile_activation_2d(n_features=64)
 
 # In forward pass
 x = self.act1d(x)  # or self.act2d(x)
@@ -41,7 +41,7 @@ x = self.act1d(x)  # or self.act2d(x)
 ```
 ├── data/                # Stores trained model data and results
 ├── notebooks/           # Jupyter notebooks for experiments
-├── results/             # Analysis and visualization results
+├── results/             # results on quant+cifar100/cifar10
 ├── src/                 # Source code
 │   ├── datasets/        # Dataset loaders
 │   ├── models/          # Neural network architectures
