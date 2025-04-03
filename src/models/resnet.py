@@ -10,7 +10,6 @@ Reference:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.checkpoint import checkpoint
 
 import os
 import sys
@@ -19,7 +18,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.quantile_activation_accum import quantile_activation_1d
 from src.quantile_activation_accum import quantile_activation_2d
-from src.watershed_classifier import WatershedClassifier
 
 
 class Activation(nn.Module):
@@ -53,7 +51,6 @@ class BasicBlock(nn.Module):
         self.act1 = nn.ReLU()
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
-
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
@@ -127,10 +124,7 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.act2 = Activation(512 * block.expansion, activation_type, dim=1)
-        self.linear = nn.Linear(512 * block.expansion, 512)
-        self.classifier = WatershedClassifier(
-            num_classes=num_classes, num_features=512, num_seeds=1, num_points_per_class=100
-        )
+        self.linear = nn.Linear(512 * block.expansion, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -150,8 +144,7 @@ class ResNet(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.act2(out)
         out = self.linear(out)
-        logits, loss = self.classifier(out)
-        return logits, loss
+        return out
 
 
 def ResNet18(activation_type, num_classes):

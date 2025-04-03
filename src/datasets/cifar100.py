@@ -8,7 +8,7 @@ import torchvision.datasets as datasets
 from torchvision.transforms.v2 import AutoAugmentPolicy
 
 
-def get_cifar10(root):
+def get_cifar100(root):
     transform_train = transforms.Compose(
         [
             transforms.RandomCrop(32, padding=4),
@@ -28,8 +28,8 @@ def get_cifar10(root):
         ]
     )
 
-    trainset = datasets.CIFAR10(root=root, train=True, download=True, transform=transform_train)
+    trainset = datasets.CIFAR100(root=root, train=True, download=True, transform=transform_train)
 
-    testset = datasets.CIFAR10(root=root, train=False, download=True, transform=transform_test)
+    testset = datasets.CIFAR100(root=root, train=False, download=True, transform=transform_test)
 
     return trainset, testset, transform_train, transform_test

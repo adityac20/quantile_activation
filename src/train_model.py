@@ -17,16 +17,21 @@ from tqdm import tqdm
 from src.models.resnet import ResNet18
 
 from src.datasets.cifar10 import get_cifar10
+from src.datasets.cifar100 import get_cifar100
 
 
 def get_dataset(dataset_name: str):
     if dataset_name == "cifar10":
         return get_cifar10(root="~/Documents/Datasets_Global/")
+    elif dataset_name == "cifar100":
+        return get_cifar100(root="~/Documents/Datasets_Global/")
 
 
 def get_model(model_name: str, activation_type: str, dataset_name: str):
     if model_name == "resnet18" and dataset_name == "cifar10":
         return ResNet18(activation_type=activation_type, num_classes=10)
+    elif model_name == "resnet18" and dataset_name == "cifar100":
+        return ResNet18(activation_type=activation_type, num_classes=100)
 
 
 def train_one_epoch(
@@ -43,8 +48,8 @@ def train_one_epoch(
         for i, (inputs, labels) in enumerate(trainloader, 0):
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
-            outputs, loss_watershed = model(inputs)
-            loss = criterion(outputs, labels) + loss_watershed * (1.0 / len(trainloader))
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             loss_total += loss.item() * inputs.size(0)
@@ -66,7 +71,7 @@ def test_one_epoch(
     with tqdm(total=len(testloader), leave=False) as pbar:
         for i, (inputs, labels) in enumerate(testloader, 0):
             inputs, labels = inputs.to(device), labels.to(device)
-            outputs, _ = model(inputs)
+            outputs = model(inputs)
             _, predicted = outputs.max(1)
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
@@ -116,16 +121,16 @@ def train(
 
 def main():
     params = {
-        "num_epochs": 200,
+        "num_epochs": 400,
         "batch_size": 128,
-        "learning_rate": 0.1,
-        "weight_decay": 0.0001,
-        "dataset": "cifar10",
+        "learning_rate": 0.005,
+        "weight_decay": 0.01,
+        "dataset": "cifar100",
         "model_name": "resnet18",
         "activation_type": "quant",
         "flag_intermediate_quant": True,
     }
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     dataset = get_dataset(params["dataset"])
     trainset, testset, transform_train, transform_test = dataset
 
@@ -135,13 +140,8 @@ def main():
     model = get_model(params["model_name"], params["activation_type"], params["dataset"]).to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(
-        model.parameters(),
-        lr=params["learning_rate"],
-        momentum=0.9,
-        weight_decay=params["weight_decay"],
-    )
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=params["num_epochs"])
+    optimizer = optim.Adam(model.parameters(), lr=params["learning_rate"])
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[200, 300, 350], gamma=0.1)
 
     train(model, trainloader, testloader, criterion, optimizer, scheduler, device, params)
 
